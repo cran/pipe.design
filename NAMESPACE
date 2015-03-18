@@ -1,0 +1,13 @@
+export(
+pipe.design
+)
+
+import(
+ggplot2,
+gtools
+)
+
+S3method(plot,pipe)
+S3method(plot,pipe.sim)
+S3method(print,pipe)
+S3method(print,pipe.sim)

@@ -1,0 +1,20 @@
+citHeader("To cite pipe.design in publications use:")
+
+citEntry(entry = "Article",
+  title        = "A product of independent beta probabilities dose escalation design for dual-agent phase I trials",
+  author       = personList(as.person("Adrian P. Mander"),
+                   as.person("Michael J. Sweeting")),
+  journal      = "Statistics in Medicine",
+  year         = "2015",
+  volume       = "34",
+  number       = "8",
+  pages        = "1261--76",
+  url          = "dx.doi.org/10.1002/sim.6434",
+
+  textVersion  =
+  paste("Adrian P. Mander, Michael J. Sweeting (2015).",
+        "A product of independent beta probabilities dose escalation design for dual-agent phase I trials.",
+        "Statistics in Medicine, 34(8), 1261-76.",
+        "URL dx.doi.org/10.1002/sim.6434")
+)
+
