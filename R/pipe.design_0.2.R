@@ -1,5 +1,7 @@
-## pipe.design version 0.1
-## MJS 18/03/2015
+## pipe.design version 0.2
+## Changed function to calculate shape and scale parameters of beta from median and sample size
+## Added no diagonal escalation constraint, by specifying -nodiag after chosesn constraint, e.g. "neighbouring-nodiag" or "no.dose.skip-nodiag"
+## MJS 23/04/2015
 
 if(getRversion() >= "2.15.1") globalVariables(c("y","z"))
 
@@ -20,6 +22,8 @@ if(getRversion() >= "2.15.1") globalVariables(c("y","z"))
 ## constraint - dose-skipping constraint (defaults to no constraint). Options are
 	## "neighbouring" - any dose combination can be chosen up to one dose level above OR BELOW current drug A and drug B levels (i.e. neighbouring current dose)
 	## "no.dose.skip" - any dose combination can be chosen up to one dose level above ANY previously experimented drug A and drug B levels
+	## "neighbouring-nodiag" - As "neighbouring" but prohibiting diagonal escalation (diagonal de-escalation is still allowed)
+	## "no.dose.skip-nodiag" - As "no.dose.skip" but prohibiting diagonal escalation (diagonal de-escalation is still allowed)
 ## epsilon - should there be a safety constraint imposed if the posterior probability(dose > MTC)>epsilon. This averages over posterior distribution of MTC contours
 	## Defaults to NULL
 	## Any number is the posterior tail probability for which any dose that exceeds this is not experimented on.
@@ -54,7 +58,7 @@ pipe.design<-function(N=dim(data)[1]+1,S=1,c,theta,pi=NULL,prior.med,prior.ss,st
 	# Do some checks of inputs
 	if(!(strategy %in% c("ss","ss-random"))) stop("strategy must be one of `ss', `ss-random' or `p'")
 	if(!(admis %in% c("adjacent","closest"))) stop("admis must be one of `adjacent', `closest' or `both'")
-	if(!is.null(constraint) & !(constraint %in% c("neighbouring","no.dose.skip"))) stop("constraint must be one of `neighbouring' or `no.dose.skip'")
+	if(!is.null(constraint) & !(constraint %in% c("neighbouring","no.dose.skip","neighbouring-nodiag","no.dose.skip-nodiag"))) stop("constraint must be one of `neighbouring', `no.dose.skip', `neighbouring-nodiag' or `no.dose.skip-nodiag'")
 	if(!(mode %in% c("sim","nodlt","alldlt"))) stop("mode must be one of `sim', `nodlt', or `alldlt'")
 	if(mode=="sim" & is.null(pi)){
 		cat("`pi' must be specified to conduct a simulation study, only next recommended dose will be given \n")
@@ -101,7 +105,6 @@ pipe.design<-function(N=dim(data)[1]+1,S=1,c,theta,pi=NULL,prior.med,prior.ss,st
 	rec.i.sim<-rec.j.sim<-array(NA,dim=c(S,N/c,doses))
 	rec<-matrix(0,ncol=J,nrow=I)
 	n.rpII<-vector()
-
 	## Find a and b parameters from beta distribution with median = prior.med and prior strength given by prior.ss
 	if(is.null(a) & is.null(b)){
 		prior <- beta.med(prior.med,prior.ss)
@@ -151,6 +154,20 @@ pipe.design<-function(N=dim(data)[1]+1,S=1,c,theta,pi=NULL,prior.med,prior.ss,st
 	
 		rec.i=nxt$rec.i
 		rec.j=nxt$rec.j
+#browser()
+#theta.list<-seq(0.05,0.95,by=0.05)
+#K<-length(theta.list)
+#p<-sapply(1:K,function(k){pbeta(theta.list[k],a,b)},simplify=F)
+#mtc.num<-sapply(1:K,function(k){unlist(lapply(matrices,function(l){prod((1-p[[k]])[l==1])*prod(p[[k]][l==0])}))},simplify=F)
+#mtc.lik<-sapply(1:K,function(k){mtc.num[[k]]/sum(mtc.num[[k]])},simplify=F)
+#mat.lik<-sapply(1:K,function(k){sapply(1:length(mtc.lik[[k]]),function(l){matrices[[l]]*mtc.lik[[k]][[l]]},simplify=F)},simplify=F)
+#weight.pMTC<-sapply(1:K,function(k){Reduce('+',mat.lik[[k]])})
+#test<-apply(weight.pMTC,1,function(x){-diff(x)})
+#par(mfcol=c(I,J))
+#for(i in 1:(I*J)){
+#	plot(1:18,test[,i],type="h")
+#}
+
 
 		for(m in 1:(N/c)){ # Loop over cohorts
 			if(doses==1){		
@@ -284,7 +301,6 @@ closest<-function(mat){
 
 ## Create admissible dose matrix
 mtc.create<-function(matrices,p,constraint,pconstraint,epsilon,admis,rec.i,rec.j,n){
-
 	m<-dim(rec.i)[1]
 
 	## Assess all possible MTC contours to find most likely
@@ -293,6 +309,9 @@ mtc.create<-function(matrices,p,constraint,pconstraint,epsilon,admis,rec.i,rec.j
 	mtc.mode<-which.max(mtc.lik)
 	mat<-matrices[[mtc.mode]]
 	
+#mtc.upp.num<-unlist(lapply(matrices,function(l){prod((1-pupper)[l==1])*prod(pupper[l==0])}))
+#mtc.upp.lik<-mtc.upp.num/sum(mtc.upp.num)
+
 	I<-dim(mat)[1]
 	J<-dim(mat)[2]
 
@@ -318,7 +337,7 @@ mtc.create<-function(matrices,p,constraint,pconstraint,epsilon,admis,rec.i,rec.j
 		matupper2<-matrix(0,nrow=I,ncol=J)
 	}
 	
-	if(constraint=="neighbouring"){
+	if(grepl("neighbouring",constraint)){
 		## IF NEIGHBOURING CONSTRAINT AND MORE THAN ONE DOSE RECOMMENDATION PER COHORT THEN USE UNION OF BOTH ADMISSIBLE REGIONS
 		if(dim(rec.i)[2]>1){
 			admissible1<- row(mat)<=max(rec.i[m,1],0)+1 & col(mat)<=max(rec.j[m,1],0)+1 & row(mat)>=max(rec.i[m,1],0)-1 & col(mat)>=max(rec.j[m,1],0)-1
@@ -327,7 +346,7 @@ mtc.create<-function(matrices,p,constraint,pconstraint,epsilon,admis,rec.i,rec.j
 		} else {
 			admissible<- row(mat)<=max(rec.i[m,1],0)+1 & col(mat)<=max(rec.j[m,1],0)+1 & row(mat)>=max(rec.i[m,1],0)-1 & col(mat)>=max(rec.j[m,1],0)-1
 		}
-	} else if(constraint=="no.dose.skip"){
+	} else if(grepl("no.dose.skip",constraint)){
 		## IF NO.DOSE.SKIP CONSTRAINT AND MORE THAN ONE DOSE RECOMMENDATION PER COHORT THEN USE UNION OF BOTH ADMISSIBLE REGIONS
 		if(dim(rec.i)[2]>1){
 			admissible1<- row(mat)<=max(rec.i[,1],0)+1 & col(mat)<=max(rec.j[,1],0)+1
@@ -340,6 +359,17 @@ mtc.create<-function(matrices,p,constraint,pconstraint,epsilon,admis,rec.i,rec.j
 		## IF NO NEIGHBOURING CONSTRAINT THEN ALL DOSE COMBINATIONS ARE ADMISSIBLE	
 		admissible<- matrix(TRUE,nrow=I,ncol=J)		
 	}
+	
+	## IF A NODIAG CONSTRAINT IS ADDITIONALLY SPECIFIED
+	if(grepl("nodiag",constraint)){
+		if(dim(rec.i)[1]>=1){
+			if(rec.i[m,1]!=I & rec.j[m,1]!=J){
+				admissible[rec.i[m,1]+1,rec.j[m,1]+1]<-FALSE
+			}
+		}
+	}
+
+	
 	if(!is.null(pconstraint) | !is.null(epsilon)){
 		admissible<-admissible & matupper==0 & matupper2==0
 		## IF THERE ARE NO ADMISSIBLE DOSES LEFT (THAT IS ALL NEIGHBOURING DOSES ARE NOW UNSAFE)
@@ -419,18 +449,30 @@ mtc<-function(dominant,admissible,strategy,rec.i,rec.j,pi.theta,mat,p,alternate)
 }
 
 
-
-
 ## Obtain a and b parameters for beta prior from median and sample size using numerical optimisation
 beta.med<-function(prior.med,prior.ss){
-	opt.function<-function(par,prior.med,prior.ss){
-		a<-pmin(exp(par),prior.ss)
-		b<-prior.ss-a
-		suppressWarnings(sum(abs(pbeta(prior.med,a,b)-0.5)))
+	betaprior1 = function(K, x, p) {
+        m.lo = 0
+        m.hi = 1
+        flag = 0
+        while (flag == 0) {
+            m0 = (m.lo + m.hi)/2
+            p0 = pbeta(x, K * m0, K * (1 - m0))
+            if (p0 < p) 
+                m.hi = m0
+            else m.lo = m0
+            if (abs(p0 - p) < 1e-04) 
+             flag = 1
+   		}
+		return(m0)
 	}
-	init.par<-log(prior.ss/2)
-	a.med<-exp(optim(init.par,opt.function,prior.med=prior.med,prior.ss=prior.ss,method="BFGS")$par)
-	b.med<-prior.ss-a.med
+	a.med<-b.med<-matrix(NA,nrow=dim(prior.med)[1],ncol=dim(prior.med)[2])
+	for(i in 1:dim(prior.med)[1]){
+		for(j in 1:dim(prior.med)[2]){
+			a.med[i,j]<-prior.ss[i,j]*betaprior1(prior.ss[i,j],prior.med[i,j],0.5)
+			b.med[i,j]<-prior.ss[i,j]-a.med[i,j]
+		}
+	}
 	return(list(a=a.med,b=b.med))
 }
 

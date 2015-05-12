@@ -9,8 +9,8 @@ Print method for a trial or series of trials conducted using a \code{\link{pipe.
 }
 \usage{
 \method{print}{pipe}(x, \dots)
-\method{print}{pipe.sim}(x, pi = x$pi, cut.points = c(0, 15, 25, 35, 45.1, 100)/100,
- digits = 1, print = TRUE, \dots)
+\method{print}{pipe.sim}(x, pi = x$pi, cut.points = c(0, 15, 25, 35, 45.1, 100)/100, digits = 1, 
+	print = TRUE, \dots)
 }
 \arguments{
   \item{x}{
@@ -34,8 +34,8 @@ Cutpoints of toxicity for which the operating characteristics are to be categori
 If a single trial is conducted, then the \code{\link{print}} function currently produces summary information about the data observed, current best estimate of the MTC and the upper toxicity constraint contour. 
 If a simulation study is conducted, then the following operating characteristics are printed:
 \describe{
-	\item{Experimentation percentages}{Percentage of patients recruited to each true region of toxicity (as specified by \code{cutpoints}), across the simulated trials}
-	\item{Recommendation percentages}{Percentage of trials that recommend doses within each true region of toxicity (as specified by \code{cutpoint})}
+	\item{Experimentation percentages}{Percentage of patients recruited to each true region of toxicity (as specified by \code{cut.points}), across the simulated trials}
+	\item{Recommendation percentages}{Percentage of times that recommend doses lie within each true region of toxicity (as specified by \code{cut.points}). As more than one dose combination can be recommended in any trial, the denominator is the total number of recommended phase II doses over the simulations}
 }
 
 }

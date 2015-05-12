@@ -43,7 +43,7 @@ pipe.design(N=dim(data)[1]+1, S=1, c, theta, pi=NULL,  prior.med,
 	A string detailing how to choose admissible doses around the maximum tolerated contour (MTC). Options are "adjacent" and "closest". See details below
 }
   \item{constraint}{
-	A string detailing any dose-skipping constraint to be applied. Options are "neighbouring" or "no.dose.skip" (see details below). Defaults to NULL
+	A string detailing any dose-skipping constraint to be applied. Options are "neighbouring" or "no.dose.skip" (see details below). In addition, to prevent diagonal escalation the option "-nodiag" can be appended, i.e. "neighbouring-nodiag" or "no.dose.skip-nodiag". Defaults to NULL
 }
   \item{epsilon}{
 	Any number between 0 and 1 giving a safety threshold. Doses whose (weighted) posterior probability(dose>MTC)>epsilon will not be experimented on. See details below
@@ -82,7 +82,7 @@ This function implements a Product of Independent Beta Probabilities (PIPE) Phas
 
 The dose combination assigned to the next cohort of patients is, however, obtained by calculating a maximum tolerated contour (MTC) that bisects the dose space and respects monotonicity. Admissible dose combinations considered for the next cohort are those that are either `adjacent' or `closest' to the MTC (see Mander A.P. and Sweeting M.J., Statistics in Medicine 2015) and can be specified using the \code{admis} argument. If there is more than one dose combination then either the one with the smallest sample size (least experimented on) is chosen, by specifying \code{strategy="ss"}, or admissible doses are chosen at random, weighted by the inverse of the sample size (\code{strategy="ss-random"}).
 
-Admissible doses can be constrained to be within a set of neighbouring doses to the current dose combination (\code{constraint="neighbouring"}) or within the set of doses consisting of up to one dose level above any previously experimented drug A and drug B levels (\code{constraint="no.dose.skip"}).
+Admissible doses can be constrained to be within a set of neighbouring doses to the current dose combination (\code{constraint="neighbouring"}) or within the set of doses consisting of up to one dose level above any previously experimented drug A and drug B levels (\code{constraint="no.dose.skip"}). To additionally prevent diagonal escalation (e.g. where both drugs are escalated together), use either (\code{constraint="neighbouring-nodiag"}) or (\code{constraint="no.dose.skip-nodiag"}).
 
 In addition, a safety constraint can be added, to avoid potential overdosing. Dose combinations whose expected probability of being above the MTC is greater than a threshold \code{epsilon} are excluded from the admissible doses for the next cohort. The expected probability is calculated by averaging over all possible MTCs, weighted by their posterior probabilities. An alternative safety constraint can be used by specifying \code{uppertox.constraint=c}, where c is the upper toxicity level from which a contour is derived (e.g. c=0.6 calculates the most likely contour for a 60% chance of DLT). No doses above this contour will be used. 
 
@@ -105,7 +105,7 @@ An object of class "pipe" (when N=1) or "pipe.sim" (when N>1) is a list with the
 	\item{\code{rec.i.sim}}{An S x (N/c) matrix with elements representing the level of drug A for each cohort}
 	\item{\code{rec.j.sim}}{An S x (N/c) matrix with elements representing the level of drug B for each cohort}
 	\item{\code{exp}}{A matrix showing the experimentation proportions for each dose combination averaged across simulations}
-	\item{\code{rec}}{A matrix showing the proportion of times each dose combination is recommended over the simulations}
+	\item{\code{rec}}{A matrix showing the proportion of times each dose combination is recommended, where the denominator is the total number of recommended phase II doses over the simulations}
 	\item{\code{dlts}}{A vector giving the average number of DLTs occuring in each simulated trial}
 	\item{\code{mat.list}}{A list of binary matrices showing the most likely MTC before each cohort is recruited. Output only if \code{S=1}}
 	\item{\code{uppermat.list}}{A list of binary matrices showing the most likely contour for \code{uppertox.constraint} before each cohort is recruited. Output only if \code{S=1} and \code{uppertox.constraint} is used}

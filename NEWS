@@ -1,3 +1,10 @@
+Version 0.2 (12th May 2015)
+-------------
+* Allows non-diagonal escalation in combination with a neighbouring or no.dose.skip constraint
+* Uses a new optimsation algorithm to calculate beta a and b parameters from median and sample size. Previous version did not converge for large sample sizes.
+* Clarify in the help files that the recommendation percentages are the percentage of times each dose combination is recommended over the total number of recommended combinations in the simulated trials (which is often more than N)
+
+
 Version 0.1 (18th March 2015)
 -------------
 * First release. 
