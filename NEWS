@@ -1,3 +1,9 @@
+Version 0.3 (24th July 2015)
+-------------
+* Fixed a bug where program crashes if prior.med is not specified (thanks to Jing Hu for reporting this)
+* pipe.design returns an object "rpII.list" listing all the recommended Phase II dose combinations for each simulation
+
+
 Version 0.2 (12th May 2015)
 -------------
 * Allows non-diagonal escalation in combination with a neighbouring or no.dose.skip constraint

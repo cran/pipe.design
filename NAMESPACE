@@ -7,6 +7,9 @@ ggplot2,
 gtools
 )
 
+importFrom("grDevices", "rainbow")
+importFrom("stats", "pbeta", "rbinom")
+
 S3method(plot,pipe)
 S3method(plot,pipe.sim)
 S3method(print,pipe)

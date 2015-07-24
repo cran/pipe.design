@@ -1,7 +1,6 @@
-## pipe.design version 0.2
-## Changed function to calculate shape and scale parameters of beta from median and sample size
-## Added no diagonal escalation constraint, by specifying -nodiag after chosesn constraint, e.g. "neighbouring-nodiag" or "no.dose.skip-nodiag"
-## MJS 23/04/2015
+## pipe.design version 0.3
+## Fixed bug where program crashes if prior.med is not specified (thanks to Jing Hu for reporting this)
+## MJS 24/07/2015
 
 if(getRversion() >= "2.15.1") globalVariables(c("y","z"))
 
@@ -49,11 +48,20 @@ if(getRversion() >= "2.15.1") globalVariables(c("y","z"))
 	## N.B. Not documented in Mander and Sweeting 2015.
 
 
-pipe.design<-function(N=dim(data)[1]+1,S=1,c,theta,pi=NULL,prior.med,prior.ss,strategy,admis,constraint=NULL,epsilon=NULL,mode="sim",data=matrix(nrow=0,ncol=0),a=NULL,b=NULL,alternate=FALSE,uppertox.constraint=NULL,stop=NULL){
+pipe.design<-function(N=dim(data)[1]+1,S=1,c,theta,pi=NULL,prior.med=NULL,prior.ss=NULL,strategy,admis,constraint=NULL,epsilon=NULL,mode="sim",data=matrix(nrow=0,ncol=0),a=NULL,b=NULL,alternate=FALSE,uppertox.constraint=NULL,stop=NULL){
 
+	# Check that either prior.med and prior.ss are specified, or a and b
+	if(is.null(prior.med) & is.null(a)){
+		stop("Either `prior.med' and `prior.ss' or `a' and `b' must be specified")
+	}
 	# Dimensions of two-agent design
-	I=dim(prior.med)[1]
-	J=dim(prior.med)[2]
+	if(!is.null(prior.med)){
+		I=dim(prior.med)[1]
+		J=dim(prior.med)[2]
+	} else {
+		I=dim(a)[1]
+		J=dim(b)[1]
+	}
 	
 	# Do some checks of inputs
 	if(!(strategy %in% c("ss","ss-random"))) stop("strategy must be one of `ss', `ss-random' or `p'")
@@ -113,7 +121,7 @@ pipe.design<-function(N=dim(data)[1]+1,S=1,c,theta,pi=NULL,prior.med,prior.ss,st
 	}
 
 	# Set up more lists
-	mat.list=uppermat.list=uppermat2.list=n.list=r.list=list()
+	mat.list=uppermat.list=uppermat2.list=n.list=r.list=rpII.list=list()
 	for(s in 1:S){ # Loop over simulations
 		# Initialise No DLTs and No. patients for each dose combination
 		r=matrix(0,nrow=I,ncol=J)
@@ -154,19 +162,6 @@ pipe.design<-function(N=dim(data)[1]+1,S=1,c,theta,pi=NULL,prior.med,prior.ss,st
 	
 		rec.i=nxt$rec.i
 		rec.j=nxt$rec.j
-#browser()
-#theta.list<-seq(0.05,0.95,by=0.05)
-#K<-length(theta.list)
-#p<-sapply(1:K,function(k){pbeta(theta.list[k],a,b)},simplify=F)
-#mtc.num<-sapply(1:K,function(k){unlist(lapply(matrices,function(l){prod((1-p[[k]])[l==1])*prod(p[[k]][l==0])}))},simplify=F)
-#mtc.lik<-sapply(1:K,function(k){mtc.num[[k]]/sum(mtc.num[[k]])},simplify=F)
-#mat.lik<-sapply(1:K,function(k){sapply(1:length(mtc.lik[[k]]),function(l){matrices[[l]]*mtc.lik[[k]][[l]]},simplify=F)},simplify=F)
-#weight.pMTC<-sapply(1:K,function(k){Reduce('+',mat.lik[[k]])})
-#test<-apply(weight.pMTC,1,function(x){-diff(x)})
-#par(mfcol=c(I,J))
-#for(i in 1:(I*J)){
-#	plot(1:18,test[,i],type="h")
-#}
 
 
 		for(m in 1:(N/c)){ # Loop over cohorts
@@ -263,12 +258,15 @@ pipe.design<-function(N=dim(data)[1]+1,S=1,c,theta,pi=NULL,prior.med,prior.ss,st
 		## If trial has stopped early
 			n.rpII[s]<-0
 		}
+		rpII<-rbind(rpII.i,rpII.j)
+		rownames(rpII)<-c("rpII.A","rpII.B")
+		rpII.list[[s]]<-rpII
 		cat(s,"\n")
 	}
 	exp<-Reduce('+',n.sim)/sum(Reduce('+',n.sim))
 	no.not.treated<-N*S-sum(Reduce('+',n.sim))
 	dlts<-sapply(1:S,function(l){sum(r.sim[[l]])/sum(n.sim[[l]])})
-	results<-list(r.sim=r.sim,n.sim=n.sim,rec.i.sim=rec.i.sim,rec.j.sim=rec.j.sim,exp=exp,rec=rec/sum(rec),dlts=dlts,mat.list=mat.list,uppermat.list=uppermat.list,uppermat2.list=uppermat2.list,r.list=r.list,n.list=n.list,n.rpII=n.rpII,no.not.treated=no.not.treated,pi=pi,theta=theta)
+	results<-list(r.sim=r.sim,n.sim=n.sim,rec.i.sim=rec.i.sim,rec.j.sim=rec.j.sim,exp=exp,rec=rec/sum(rec),dlts=dlts,mat.list=mat.list,uppermat.list=uppermat.list,uppermat2.list=uppermat2.list,r.list=r.list,n.list=n.list,n.rpII=n.rpII,no.not.treated=no.not.treated,pi=pi,theta=theta,rpII.list=rpII.list)
 	if(S>1){
 		class(results)<-"pipe.sim"
 	} else {

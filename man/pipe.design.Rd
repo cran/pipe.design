@@ -7,8 +7,8 @@ Dual-Agent Dose Escalation for Phase I Trials using the PIPE Design
 \description{
 Implements the Product of Independent beta Probabilities dose Escalation (PIPE) design for dual-agent Phase I trials as described in Mander A.P. and Sweeting M.J. Statistics in Medicine 2015. doi: 10.1002/sim.6434}
 \usage{
-pipe.design(N=dim(data)[1]+1, S=1, c, theta, pi=NULL,  prior.med,	
-	prior.ss, strategy, admis, constraint=NULL, 	epsilon=NULL, 
+pipe.design(N=dim(data)[1]+1, S=1, c, theta, pi=NULL,  prior.med=NULL,	
+	prior.ss=NULL, strategy, admis, constraint=NULL, 	epsilon=NULL, 
 	mode="sim", data=matrix(nrow=0,ncol=0), a=NULL, b=NULL, 
 	alternate=FALSE, 	uppertox.constraint=NULL, stop=NULL)
 }
@@ -116,7 +116,7 @@ An object of class "pipe" (when N=1) or "pipe.sim" (when N>1) is a list with the
 	\item{\code{no.not.treated}}{The total number of patients not treated (in the trial) accumulated across the simulated trials due to a trial stopping early}
 	\item{\code{pi}}{The true probability of DLT for each dose combination, as specified in the input argument}
 	\item{\code{theta}}{The target toxicity probability, as specified in the input argument}
-
+	\item{\code{rpII.list}}{A list giving the recommended Phase II dose combinations for each simulation}
 }
 }
 \references{
