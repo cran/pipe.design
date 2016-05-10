@@ -1,3 +1,11 @@
+Version 0.4 (26th April 2016)
+-------------
+* New web browser interface using Shiny; runShinyPIPE()
+* Corrected a bug where the dimensions of the dose-space were incorrectly calculated if parameters a and b were given as argument. Many thanks to Roxane Duroux for spotting this mistake.
+* pipe.design object now return a and b, the parameters of the beta prior for each dose-combination
+* plot.pipe allows an extra plot to be produced that gives the empirical probabilities of DLT (posterior medians) and 95% credible intervals
+* Densities of the posterior probability of toxicity at each dose level can be calculated using the distribution of monotonic contours. These can be plotted after each cohort is recruited.
+
 Version 0.3 (24th July 2015)
 -------------
 * Fixed a bug where program crashes if prior.med is not specified (thanks to Jing Hu for reporting this)

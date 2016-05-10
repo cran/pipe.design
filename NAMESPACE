@@ -1,5 +1,6 @@
 export(
-pipe.design
+pipe.design,
+runShinyPIPE
 )
 
 import(
@@ -9,6 +10,12 @@ gtools
 
 importFrom("grDevices", "rainbow")
 importFrom("stats", "pbeta", "rbinom")
+importFrom("xtable","xtable")
+importFrom("grDevices", "dev.new")
+importFrom("graphics", "barplot", "box", "lines", "mtext", "par",
+              "plot", "polygon", "segments", "text")
+importFrom("stats", "complete.cases", "dbeta", "median", "qbeta") 
+
 
 S3method(plot,pipe)
 S3method(plot,pipe.sim)

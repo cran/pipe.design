@@ -5,12 +5,13 @@
 Dual-Agent Dose Escalation for Phase I Trials using the PIPE Design
 }
 \description{
-Implements the Product of Independent beta Probabilities dose Escalation (PIPE) design for dual-agent Phase I trials as described in Mander A.P. and Sweeting M.J. Statistics in Medicine 2015. doi: 10.1002/sim.6434}
+Implements the Product of Independent beta Probabilities dose Escalation (PIPE) design for dual-agent Phase I trials as described in Mander A.P. and Sweeting M.J (2015) Statistics in Medicine. <doi: 10.1002/sim.6434>}
 \usage{
 pipe.design(N=dim(data)[1]+1, S=1, c, theta, pi=NULL,  prior.med=NULL,	
 	prior.ss=NULL, strategy, admis, constraint=NULL, 	epsilon=NULL, 
 	mode="sim", data=matrix(nrow=0,ncol=0), a=NULL, b=NULL, 
-	alternate=FALSE, 	uppertox.constraint=NULL, stop=NULL)
+	alternate=FALSE, 	uppertox.constraint=NULL, stop=NULL, 
+	non.admissible=NULL, seed=NULL)
 }
 
 \arguments{
@@ -76,23 +77,36 @@ pipe.design(N=dim(data)[1]+1, S=1, c, theta, pi=NULL,  prior.med=NULL,
 	(Optional). Value of a stopping threshold. An alternative stopping rule to a fixed sample size specification (through \code{N}) or termination of a trial due to safety constraints (\code{epsilon} or \code{uppertox.constraint}). The trial is stopped if the posterior probability of being > \code{theta} at the lowest dose combination is greater than \code{stop}
 }
 
+\item{non.admissible}{
+	(Optional) A matrix with rows denoting levels of drug A and columns denoting levels of drug B. Each element is logical indicating whether the dose combination is non-admissible (TRUE) or not. Non-admissible doses can never be experimented on in during the trial.
+}
+
+\item{seed}{
+  (Optional) Starting seed to allow replication of the trial or simulation.
+}
+
 }
 \details{
 This function implements a Product of Independent Beta Probabilities (PIPE) Phase I dose-escalation design for a dual-agent trial. An independent Beta prior is placed on the probability of dose limiting toxicity (DLT) for each dose combination. Simple conjugate Bayesian analysis is used to obtain the posterior at each dose combination. This model is considered a `working model` only as it does not account for monotonically increasing toxicity by dose. 
 
 The dose combination assigned to the next cohort of patients is, however, obtained by calculating a maximum tolerated contour (MTC) that bisects the dose space and respects monotonicity. Admissible dose combinations considered for the next cohort are those that are either `adjacent' or `closest' to the MTC (see Mander A.P. and Sweeting M.J., Statistics in Medicine 2015) and can be specified using the \code{admis} argument. If there is more than one dose combination then either the one with the smallest sample size (least experimented on) is chosen, by specifying \code{strategy="ss"}, or admissible doses are chosen at random, weighted by the inverse of the sample size (\code{strategy="ss-random"}).
 
-Admissible doses can be constrained to be within a set of neighbouring doses to the current dose combination (\code{constraint="neighbouring"}) or within the set of doses consisting of up to one dose level above any previously experimented drug A and drug B levels (\code{constraint="no.dose.skip"}). To additionally prevent diagonal escalation (e.g. where both drugs are escalated together), use either (\code{constraint="neighbouring-nodiag"}) or (\code{constraint="no.dose.skip-nodiag"}).
+Admissible doses can be constrained to be within a set of neighbouring doses to the current dose combination (\code{constraint="neighbouring"}) or within the set of doses consisting of up to one dose level above any previously experimented drug A and drug B level (\code{constraint="no.dose.skip"}). To additionally prevent diagonal escalation (e.g. where both drugs are escalated together), use either (\code{constraint="neighbouring-nodiag"}) or (\code{constraint="no.dose.skip-nodiag"}).
 
 In addition, a safety constraint can be added, to avoid potential overdosing. Dose combinations whose expected probability of being above the MTC is greater than a threshold \code{epsilon} are excluded from the admissible doses for the next cohort. The expected probability is calculated by averaging over all possible MTCs, weighted by their posterior probabilities. An alternative safety constraint can be used by specifying \code{uppertox.constraint=c}, where c is the upper toxicity level from which a contour is derived (e.g. c=0.6 calculates the most likely contour for a 60% chance of DLT). No doses above this contour will be used. 
 
-The programe will either run as a simulation (the default), or by using a deterministic set of outcomes (all DLTs / no DLTs) specified using \code{mode="alldlt"} and \code{mode="nodlt"}, respectively. 
+The program will either run as a simulation (the default), or by using a deterministic set of outcomes (all DLTs / no DLTs) specified using \code{mode="alldlt"} and \code{mode="nodlt"}, respectively. 
 
 If the user specifies a data-frame using the \code{data} argument, then every simulated trial will begin with the specified doses and DLT outcomes. This option is useful for assess operating characteristics mid-way through the trial, or just to obtain the dose for the next cohort.
 
 A trial of size \code{N} is generally run, except if no doses are deemed safe according to one of the two safety constraints described above, at which point the trial will stop. Users may additionally specify a stopping rule using \code{stop=s}, where the trial is stopped if the posterior probability that the lowest dose combination is above the target toxicity probability is greater than s. Note, this stopping rule relies only on the prior and data collected for the first dose combination and does not borrow strength from other doses. Hence it should be used with caution.
 
-A final option is to force deescalation if above the MTC and escalation if below (subject to meeting other specified constraints) by specifying \code{alternate=TRUE}. This constraint ensures the design follows the properties of `coherence` (Cheung YK. Biometrika 2005). 
+One can force deescalation if above the MTC and escalation if below (subject to meeting other specified constraints) by specifying \code{alternate=TRUE}. This constraint ensures the design follows the properties of `coherence` (Cheung YK. Biometrika 2005). 
+
+If a single trial is specified by \code{S=1} then by additionally specifying \code{densities=TRUE} the returned object will include calculations of the probability of toxicity densities for each dose-combination after each cohort (with cohort 0 representing the prior). The densities are calculated over a grid of probabilities \eqn{\alpha_1,...,\alpha_K} through weighting by the contour probabilities for each \eqn{\alpha_k}:
+  \deqn{p(\alpha_k< \pi_{i,j} \le \alpha_{k+1}) = \sum_{C_s \in \mathcal{C}} C_s[i,j] P_{C_s}(\alpha_{k+1})- \sum_{C_s \in \mathcal{C}} C_s[i,j] P_{C_s}(\alpha_{k}) }
+Further details regarding the notation can be found in Mander A.P. and Sweeting M.J. (2015) Statistics in Medicine. <doi: 10.1002/sim.6434>
+
 }
 \value{
 \code{pipe.design} returns an object of class "pipe" or "pipe.sim"; the latter occuring when more than one simulation has been conducted.
@@ -117,10 +131,13 @@ An object of class "pipe" (when N=1) or "pipe.sim" (when N>1) is a list with the
 	\item{\code{pi}}{The true probability of DLT for each dose combination, as specified in the input argument}
 	\item{\code{theta}}{The target toxicity probability, as specified in the input argument}
 	\item{\code{rpII.list}}{A list giving the recommended Phase II dose combinations for each simulation}
+	\item{\code{a}}{A matrix with rows denoting levels of drug A and columns levels of drug B. Each element gives the \code{shape1} parameter (a) from a prior Beta(a,b) distribution}
+	\item{\code{b}}{A matrix with rows denoting levels of drug A and columns levels of drug B. Each element gives the \code{shape2} parameter (b) from a prior Beta(a,b) distribution}
+	\item{\code{plot.density}}{A list of objects of length \code{c}+1. The kth element is a ggplot object giving the toxicity density plots for each dose-combination after the (k-1)st cohort has been recruited}
 }
 }
 \references{
- Mander A.P., Sweeting M.J. A product of independent beta probabilities dose escalation design for dual-agent phase I trials. \emph{Statistics in Medicine} (2015) 34(8): 1261--1276.
+ Mander A.P., Sweeting M.J. A product of independent beta probabilities dose escalation design for dual-agent phase I trials. \emph{Statistics in Medicine} (2015) 34(8): 1261--1276. <doi: 10.1002/sim.6434>
  
 Cheung Y.K. Coherence principles in dose-finding studies. \emph{Biometrika} (2005) 92(4): 863--873.
 
@@ -139,6 +156,7 @@ Michael Sweeting \email{mjs212@medschl.cam.ac.uk} (University of Cambridge, UK)
 }
 \examples{
 
+
 ## Reproducing Figure 5 from Mander and Sweeting, Statistics in Medicine 2015.
 ## The true probability of DLT for a 6x6 grid of dose combinations 
 ## (Scenario 3 from Mander and Sweeting, Statistics in Medicine 2015)
@@ -155,12 +173,19 @@ prior.med<-matrix(c(0.02,0.03,0.06,0.10,0.18,0.23,0.03,0.05,0.09,0.13,0.21,0.27,
 ## Using a safety constraint with epsilon = 0.8
 ## Running a single trial with sample size of 40, cohort size 2 
 ## and target toxicity of 0.3
+\dontrun{
 set.seed(700)
 example<-pipe.design(N=40,S=1,c=2,theta=0.3,pi=pi,prior.med=prior.med,
 prior.ss=matrix(1/36,ncol=6,nrow=6),strategy="ss",constraint="neighbouring",
 epsilon=0.8,admis="closest",alternate=FALSE)
 example
 plot(example)
+}
+
+\dontrun{
+## Run a Shiny GUI version of pipe.design
+runShinyPIPE()
+}
 
 \dontrun{
 ## Conducting a simulation study (1000 trials) to investigate 
@@ -173,6 +198,9 @@ epsilon=0.8,admis="closest",alternate=FALSE)
 scen3
 }
 
+
 }
+
+
 
 

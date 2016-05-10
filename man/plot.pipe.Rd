@@ -9,7 +9,7 @@ Plot method for a trial or series of trials conducted using a \code{\link{pipe.d
 }
 \usage{
 \method{plot}{pipe}(x, type = "b", pi = x$pi, theta = x$theta, epsilon.line = TRUE, 
-    uppertox.constraint.line = FALSE, ...)
+    uppertox.constraint.line = FALSE, add.empirical.data = FALSE, ...)
 \method{plot}{pipe.sim}(x, pi = x$pi, theta = x$theta, plot = "both", ...) 
 }
 \arguments{
@@ -30,6 +30,9 @@ A matrix with rows denoting levels of drug A and columns denoting levels of drug
 }
 \item{uppertox.constraint.line}{
 	Should the toxicity safety contour specified by \code{uppertox.constraint} in \code{\link{pipe.design}} be shown? Defaults to FALSE.
+}
+\item{add.empirical.data}{
+	Should an extra plot be produced with the empirical posterior median toxicity probabilities (from the independent beta distributions), and 95% credible intervals? Defaults to FALSE.
 }
  \item{plot}{
 	The type of operating characteristics to plot for a series of simulated PIPE trials. Options are "exp" (experimentation percentages), "rec" (recommendation percentages), or "both" (both experimentation and recommendation percentages side-by-side). The default is "both".
