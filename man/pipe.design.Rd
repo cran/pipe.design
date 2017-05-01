@@ -171,7 +171,42 @@ prior.med<-matrix(c(0.02,0.03,0.06,0.10,0.18,0.23,0.03,0.05,0.09,0.13,0.21,0.27,
 ## Using a neighbouring escalation constraint
 ## Selecting the closest admissible doses
 ## Using a safety constraint with epsilon = 0.8
-## Running a single trial with sample size of 40, cohort size 2 
+
+## Obtain dose recommendations for first cohort
+cohort1<-pipe.design(N=2,S=1,c=2,theta=0.3,prior.med=prior.med,
+prior.ss=matrix(1/36,ncol=6,nrow=6),strategy="ss",constraint="neighbouring",
+epsilon=0.8,admis="closest",alternate=FALSE)
+cohort1 ## Recommends starting at (1,1)
+## Second cohort
+## Assume no toxicities are seen in first cohort
+data1<-data.frame(patient=1:2,doseA=rep(1,2),doseB=rep(1,2),tox=rep(0,2))
+cohort2<-pipe.design(data=data1,S=1,c=2,theta=0.3,prior.med=prior.med,
+prior.ss=matrix(1/36,ncol=6,nrow=6),strategy="ss",constraint="neighbouring",
+epsilon=0.8,admis="closest",alternate=FALSE)
+cohort2 ## Recommends dosing at (2,2)
+## Third cohort
+## Assume no toxicities are seen in second cohort
+data2<-rbind(data1,data.frame(patient=3:4,doseA=rep(2,2),doseB=rep(2,2),tox=rep(0,2)))
+cohort3<-pipe.design(data=data2,S=1,c=2,theta=0.3,prior.med=prior.med,
+prior.ss=matrix(1/36,ncol=6,nrow=6),strategy="ss",constraint="neighbouring",
+epsilon=0.8,admis="closest",alternate=FALSE)
+cohort3 ## Recommends dosing at (3,3)
+## Fourth cohort
+## Assume 1 toxicity is seen in third cohort
+data3<-rbind(data2,data.frame(patient=5:6,doseA=rep(3,2),doseB=rep(3,2),tox=c(1,0)))
+cohort4<-pipe.design(data=data3,S=1,c=2,theta=0.3,prior.med=prior.med,
+prior.ss=matrix(1/36,ncol=6,nrow=6),strategy="ss",constraint="neighbouring",
+epsilon=0.8,admis="closest",alternate=FALSE)
+cohort4 ## Recommends dosing at (2,4)
+plot(cohort4)
+
+
+\dontrun{
+## Run a Shiny GUI version of pipe.design
+runShinyPIPE()
+}
+
+## Simulating a single trial with sample size of 40, cohort size 2 
 ## and target toxicity of 0.3
 \dontrun{
 set.seed(700)
@@ -180,11 +215,6 @@ prior.ss=matrix(1/36,ncol=6,nrow=6),strategy="ss",constraint="neighbouring",
 epsilon=0.8,admis="closest",alternate=FALSE)
 example
 plot(example)
-}
-
-\dontrun{
-## Run a Shiny GUI version of pipe.design
-runShinyPIPE()
 }
 
 \dontrun{

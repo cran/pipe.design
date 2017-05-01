@@ -1,0 +1,9 @@
+name: shinyPIPE
+account: mikesweeting
+server: shinyapps.io
+appId: 101115
+bundleId: 446697
+url: https://mikesweeting.shinyapps.io/shinyPIPE/
+when: 1462884059.15444
+asMultiple: FALSE
+asStatic: FALSE

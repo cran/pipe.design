@@ -1,3 +1,8 @@
+Version 0.5 (1st May 2017)
+-------------
+* runShinyPIPE reorganised and updated to allow prior.ss as a matrix or the number of prior DLTs (a) and non DLTs (b) matrices to be specified
+* Example added in pipe.design to show how to run a trial in real-time
+
 Version 0.4 (26th April 2016)
 -------------
 * New web browser interface using Shiny; runShinyPIPE()

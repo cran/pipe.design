@@ -120,6 +120,12 @@ pipe.design<-function(N=dim(data)[1]+1,S=1,c,theta,pi=NULL,prior.med=NULL,prior.
     if(!is.logical(non.admissible))
       stop("non.admissible must be a matrix of logicals")
   }
+  ## Check that if a or b is specified then prior.med and prior.ss is NULL
+  if(!is.null(a) | !is.null(b)){
+    if(!is.null(prior.med) | !is.null(prior.ss)){
+      stop("prior.med and prior.ss cannot be used if a and b are specified")
+    }
+  }
   
 	## No. of dose combinations
 	k=I*J

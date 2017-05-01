@@ -1,3 +1,5 @@
+library(shiny)
+library(pipe.design)
 
 shinyServer(function(input, output , session) {
 
@@ -8,7 +10,8 @@ shinyServer(function(input, output , session) {
   ndimB <- reactive({ input$dimB })
   targ <- reactive({ input$theta  })
   
-  prior.ss <- reactive({ m <- matrix(NA , nrow=ndimA() , ncol=ndimB() )
+  ## Prior medians
+  prior.med <- reactive({ m <- matrix(NA , nrow=ndimA() , ncol=ndimB() )
                          for(i in 1:ndimA() ) {
                          for(j in 1:ndimB() ) {
                             m[i,j] <- input[[paste("prior",i,j,sep="_")]]
@@ -16,6 +19,36 @@ shinyServer(function(input, output , session) {
                          }
                          m
                          })
+  
+  ## Prior sample sizes
+  prior.ss <- reactive({ m <- matrix(NA , nrow=ndimA() , ncol=ndimB() )
+  for(i in 1:ndimA() ) {
+    for(j in 1:ndimB() ) {
+      m[i,j] <- input[[paste("priorss",i,j,sep="_")]]
+    } 
+  }
+  m
+  })
+  
+  ## Prior number of DLTs
+  prior.a <- reactive({ m <- matrix(NA , nrow=ndimA() , ncol=ndimB() )
+  for(i in 1:ndimA() ) {
+    for(j in 1:ndimB() ) {
+      m[i,j] <- input[[paste("priora",i,j,sep="_")]]
+    } 
+  }
+  m
+  })
+  
+  ## Prior number of No DLTs
+  prior.b <- reactive({ m <- matrix(NA , nrow=ndimA() , ncol=ndimB() )
+  for(i in 1:ndimA() ) {
+    for(j in 1:ndimB() ) {
+      m[i,j] <- input[[paste("priorb",i,j,sep="_")]]
+    } 
+  }
+  m
+  })
   
   pi <- reactive({ m <- matrix(NA , nrow=ndimA() , ncol=ndimB() )
   for(i in 1:ndimA() ) {
@@ -44,13 +77,13 @@ shinyServer(function(input, output , session) {
   
  
   des <- reactive({
-    if(all(!is.na( prior.ss() ))) {
+    if(all(!is.na( prior.med() ) & !is.na(prior.ss()))) {
         des <- pipe.design(
         N = nrow( dat() ) + input$cohortsize ,
         c = input$cohortsize , 
         theta = input$theta , 
-        prior.med = prior.ss() ,
-        prior.ss = matrix( 1/(ndimA()*ndimB()*input$priorss) , ndimA() , ndimB() ), 
+        prior.med = prior.med() ,
+        prior.ss = prior.ss(),
         strategy = input$strategy , 
         admis = input$admis , 
         constraint = input$constraint , 
@@ -61,6 +94,23 @@ shinyServer(function(input, output , session) {
         seed=input$seed
         ) 
     }    
+    else if(all(!is.na( prior.a() ) & !is.na(prior.b()))) {
+      des <- pipe.design(
+        N = nrow( dat() ) + input$cohortsize ,
+        c = input$cohortsize , 
+        theta = input$theta , 
+        a = prior.a() ,
+        b = prior.b(),
+        strategy = input$strategy , 
+        admis = input$admis , 
+        constraint = input$constraint , 
+        epsilon = input$epsilon ,
+        mode = "sim",
+        alternate = input$alternate ,
+        data = dat(),
+        seed=input$seed
+      ) 
+    }    
     else des <- NULL
     des
   })
@@ -70,25 +120,26 @@ simfn<-reactive({
   
     isolate({
         return(
-        
-        pipe.design(
-        N = input$N ,
-        S = input$S ,
-        c = input$cohortsize ,
-        theta = input$theta ,
-        pi = pi(),
-        prior.med = prior.ss() ,
-        prior.ss = matrix( 1/(ndimA()*ndimB()*input$priorss) , ndimA() , ndimB() ),
-        strategy = input$strategy ,
-        admis = input$admis ,
-        constraint = input$constraint ,
-        epsilon = input$epsilon ,
-        mode = "sim",
-        alternate = input$alternate ,
-        data = dat(),
-        seed=input$seed
-      )
-      ) 
+          if(all(!is.na( prior.med() ) & !is.na(prior.ss()))) {
+            pipe.design(
+              N = input$N ,
+              S = input$S ,
+              c = input$cohortsize ,
+              theta = input$theta ,
+              pi = pi(),
+              prior.med = prior.med() ,
+              prior.ss = prior.ss(),
+              strategy = input$strategy ,
+              admis = input$admis ,
+              constraint = input$constraint ,
+              epsilon = input$epsilon ,
+              mode = "sim",
+              alternate = input$alternate ,
+              data = dat(),
+              seed=input$seed
+            )
+          }
+        ) 
     })
 })
   
@@ -105,8 +156,8 @@ observe({
  observe({ 
    if(input$interpolate) {
     isolate(
-      if(all(!is.na(prior.ss()[ c(1,ndimA()) , c(1,ndimB())]))) {
-             m <- prior.ss()     
+      if(all(!is.na(prior.med()[ c(1,ndimA()) , c(1,ndimB())]))) {
+             m <- prior.med()     
              for( j in 2:(ndimB()-1) ) {
                m[1,j] <- approx(x=c(1,ndimB()) , y=m[1,c(1,ndimB())] , xout=j)$y
                updateNumericInput( session , paste("prior",1,j,sep="_") , value=m[1,j] ) 
@@ -136,7 +187,41 @@ observe({
   }
 })
 
+ observe({
+      if(input$totalss){
+        for(i in 1:ndimA()){
+          for( j in 1:ndimB() ) {  
+            updateNumericInput(session,paste("priorss",i,j,sep="_") , value=input$priorss/(ndimA()*ndimB()))
+          }  
+        }        
+  }
+})
 
+ ## Reset prior median and prior ss when prior DLT and No DLT box is ticked
+ observe({
+   if(input$p_a_and_b){
+     for(i in 1:ndimA()){
+       for( j in 1:ndimB() ) {  
+         updateNumericInput(session,paste("prior",i,j,sep="_") , value=NA)
+         updateNumericInput(session,paste("priorss",i,j,sep="_") , value=NA)
+       }  
+     }        
+   }
+ })
+ 
+ ## Reset prior a and b when prior median and SS box is ticked
+ observe({
+   if(input$pmedian){
+     for(i in 1:ndimA()){
+       for( j in 1:ndimB() ) {  
+         updateNumericInput(session,paste("priora",i,j,sep="_") , value=NA)
+         updateNumericInput(session,paste("priorb",i,j,sep="_") , value=NA)
+       }  
+     }        
+   }
+ })
+ 
+ 
 observe({ 
   if(input$reset) {
  #   isolate( {   
