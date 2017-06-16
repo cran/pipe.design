@@ -1,3 +1,12 @@
+Version 0.5.1 (16th June 2017)
+-------------
+** Corrected error that was returned if constraint argument was left as NULL
+** Updated print.pipe.sim to return more information regarding percentage of doses recommended for Phase II
+** Corrected error where "nodiag" constraint option still allowed dose combinations in which both drugs were escalated simultaneously to be admissible - thanks to Dr Graham Wheeler for reporting this issue.
+** Changed pipe.design so that random number list is updated even if data are encountered for the kth cohort. This then gives same operating behaviour for a single simulated trial and one where part of the data are pre-specified. Thanks for Simon Kirby (Pfizer) for spotting this unwanted behaviour.
+** All of pipe.design's constraints and the non.admissible option have now been addedd to ShinyPIPE
+** print.pipe.sim now also returns the percentage of times a trial recommends 0,1,2,.... doses for Phase II experimentation. 
+
 Version 0.5 (1st May 2017)
 -------------
 * runShinyPIPE reorganised and updated to allow prior.ss as a matrix or the number of prior DLTs (a) and non DLTs (b) matrices to be specified

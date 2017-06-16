@@ -8,7 +8,7 @@ Dual-Agent Dose Escalation for Phase I Trials using the PIPE Design
 Implements the Product of Independent beta Probabilities dose Escalation (PIPE) design for dual-agent Phase I trials as described in Mander A.P. and Sweeting M.J (2015) Statistics in Medicine. <doi: 10.1002/sim.6434>}
 \usage{
 pipe.design(N=dim(data)[1]+1, S=1, c, theta, pi=NULL,  prior.med=NULL,	
-	prior.ss=NULL, strategy, admis, constraint=NULL, 	epsilon=NULL, 
+	prior.ss=NULL, strategy, admis, constraint="none", 	epsilon=NULL, 
 	mode="sim", data=matrix(nrow=0,ncol=0), a=NULL, b=NULL, 
 	alternate=FALSE, 	uppertox.constraint=NULL, stop=NULL, 
 	non.admissible=NULL, seed=NULL)
@@ -44,7 +44,7 @@ pipe.design(N=dim(data)[1]+1, S=1, c, theta, pi=NULL,  prior.med=NULL,
 	A string detailing how to choose admissible doses around the maximum tolerated contour (MTC). Options are "adjacent" and "closest". See details below
 }
   \item{constraint}{
-	A string detailing any dose-skipping constraint to be applied. Options are "neighbouring" or "no.dose.skip" (see details below). In addition, to prevent diagonal escalation the option "-nodiag" can be appended, i.e. "neighbouring-nodiag" or "no.dose.skip-nodiag". Defaults to NULL
+	A string detailing any dose-skipping constraint to be applied. Options are "neighbouring" or "no.dose.skip" (see details below). In addition, to prevent diagonal escalation the option "-nodiag" can be appended, i.e. "neighbouring-nodiag" or "no.dose.skip-nodiag". Defaults to no constraint (constraint="none").
 }
   \item{epsilon}{
 	Any number between 0 and 1 giving a safety threshold. Doses whose (weighted) posterior probability(dose>MTC)>epsilon will not be experimented on. See details below
@@ -93,7 +93,7 @@ The dose combination assigned to the next cohort of patients is, however, obtain
 
 Admissible doses can be constrained to be within a set of neighbouring doses to the current dose combination (\code{constraint="neighbouring"}) or within the set of doses consisting of up to one dose level above any previously experimented drug A and drug B level (\code{constraint="no.dose.skip"}). To additionally prevent diagonal escalation (e.g. where both drugs are escalated together), use either (\code{constraint="neighbouring-nodiag"}) or (\code{constraint="no.dose.skip-nodiag"}).
 
-In addition, a safety constraint can be added, to avoid potential overdosing. Dose combinations whose expected probability of being above the MTC is greater than a threshold \code{epsilon} are excluded from the admissible doses for the next cohort. The expected probability is calculated by averaging over all possible MTCs, weighted by their posterior probabilities. An alternative safety constraint can be used by specifying \code{uppertox.constraint=c}, where c is the upper toxicity level from which a contour is derived (e.g. c=0.6 calculates the most likely contour for a 60% chance of DLT). No doses above this contour will be used. 
+In addition, a safety constraint can be added, to avoid potential overdosing. Dose combinations whose expected probability of being above the MTC is greater than a threshold \code{epsilon} are excluded from the admissible doses for the next cohort. The expected probability is calculated by averaging over all possible MTCs, weighted by their posterior probabilities. An alternative safety constraint can be used by specifying \code{uppertox.constraint=c}, where c is the upper toxicity level from which a contour is derived (e.g. c=0.6 calculates the most likely contour for a 60\% chance of DLT). No doses above this contour will be used. 
 
 The program will either run as a simulation (the default), or by using a deterministic set of outcomes (all DLTs / no DLTs) specified using \code{mode="alldlt"} and \code{mode="nodlt"}, respectively. 
 
@@ -185,29 +185,16 @@ prior.ss=matrix(1/36,ncol=6,nrow=6),strategy="ss",constraint="neighbouring",
 epsilon=0.8,admis="closest",alternate=FALSE)
 cohort2 ## Recommends dosing at (2,2)
 ## Third cohort
-## Assume no toxicities are seen in second cohort
-data2<-rbind(data1,data.frame(patient=3:4,doseA=rep(2,2),doseB=rep(2,2),tox=rep(0,2)))
+## Assume one toxicity is seen in second cohort
+data2<-rbind(data1,data.frame(patient=3:4,doseA=rep(2,2),doseB=rep(2,2),tox=c(1,0)))
 cohort3<-pipe.design(data=data2,S=1,c=2,theta=0.3,prior.med=prior.med,
-prior.ss=matrix(1/36,ncol=6,nrow=6),strategy="ss",constraint="neighbouring",
-epsilon=0.8,admis="closest",alternate=FALSE)
-cohort3 ## Recommends dosing at (3,3)
-## Fourth cohort
-## Assume 1 toxicity is seen in third cohort
-data3<-rbind(data2,data.frame(patient=5:6,doseA=rep(3,2),doseB=rep(3,2),tox=c(1,0)))
-cohort4<-pipe.design(data=data3,S=1,c=2,theta=0.3,prior.med=prior.med,
-prior.ss=matrix(1/36,ncol=6,nrow=6),strategy="ss",constraint="neighbouring",
-epsilon=0.8,admis="closest",alternate=FALSE)
-cohort4 ## Recommends dosing at (2,4)
-plot(cohort4)
+   prior.ss=matrix(1/36,ncol=6,nrow=6),strategy="ss",constraint="neighbouring",
+   epsilon=0.8,admis="closest",alternate=FALSE)
+cohort3 ## Recommends dosing at (1,3)
 
-
-\dontrun{
-## Run a Shiny GUI version of pipe.design
-runShinyPIPE()
-}
 
 ## Simulating a single trial with sample size of 40, cohort size 2 
-## and target toxicity of 0.3
+## and target toxicity of 0.3, using true probabilities of toxicity pi
 \dontrun{
 set.seed(700)
 example<-pipe.design(N=40,S=1,c=2,theta=0.3,pi=pi,prior.med=prior.med,
@@ -216,6 +203,14 @@ epsilon=0.8,admis="closest",alternate=FALSE)
 example
 plot(example)
 }
+
+
+
+\dontrun{
+## Run a Shiny GUI version of pipe.design
+runShinyPIPE()
+}
+
 
 \dontrun{
 ## Conducting a simulation study (1000 trials) to investigate 

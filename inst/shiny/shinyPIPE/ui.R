@@ -29,14 +29,115 @@ shinyUI(fluidPage( # theme = shinytheme("cerulean") ,
                         helpText("Doses whose weighted posterior probability of being greater than MTC is greater than epsilon will not be experimented on")          
                  ) ,
                  column(4 ,
-                        selectInput("alternate" , label="Alternate" , choices=list("Yes"=T,"No"=F)) ,    
+                        selectInput("alternate" , label="Alternate" , choices=list("Yes"=T,"No"=F),selected=F) ,    
                         helpText("Should the trial always alternative above and below the MTC (subject to constraints)?"),
                         # selectInput("contourselect" , label="Contour Selection" , choices=c("mode","median")),
                         numericInput("seed" , value=1, label="Seed" , min=1, max=10000, step=1),
-                        helpText("Starting seed to allow replication of the trial or simulation")
+                        helpText("Starting seed to allow replication of the trial or simulation"),
+                        numericInput("uppertox.constraint" , value=1 , label="Safety Constraint (upper toxicity)" , min=0 , max=1 , step=0.05) ,
+                        helpText("No dose combination that lies above the most likely contour for this constraint may be dosed"),
+                        numericInput("stop" , value=1 , label="Safety Constraint (stop)" , min=0 , max=1 , step=0.05) ,
+                        helpText("Stop the trial if posterior probability of being greatrer than target DLT rate at lowest dose is higher than this number")
                  )
                ) 
-             ) 
+             ), 
+             wellPanel(
+               fluidRow(
+                 h4("Non-admissible doses")
+               ),
+               fluidRow(
+                 column(4, helpText("Dose combinations that are non admissible throughout the trial (Drug A, Drug B)"))
+               ),
+               
+               fluidRow(
+                 column(1 , offset=1 ,
+                        
+                        conditionalPanel( condition = "input.dimA>=1 && input.dimB>=8" , checkboxInput("non.admissible_1_8" , value = F , label="(1,8)"  ) ) ,
+                        conditionalPanel( condition = "input.dimA>=1 && input.dimB>=7" , checkboxInput("non.admissible_1_7" , value = F , label="(1,7)"  ) ) ,                              
+                        conditionalPanel( condition = "input.dimA>=1 && input.dimB>=6" , checkboxInput("non.admissible_1_6" , value = F , label="(1,6)"  ) ) ,
+                        conditionalPanel( condition = "input.dimA>=1 && input.dimB>=5" , checkboxInput("non.admissible_1_5" , value = F , label="(1,5)"  ) ) ,
+                        conditionalPanel( condition = "input.dimA>=1 && input.dimB>=4" , checkboxInput("non.admissible_1_4" , value = F , label="(1,4)"  ) ) ,                              
+                        conditionalPanel( condition = "input.dimA>=1 && input.dimB>=3" , checkboxInput("non.admissible_1_3" , value = F , label="(1,3)"  ) ) ,
+                        conditionalPanel( condition = "input.dimA>=1 && input.dimB>=2" , checkboxInput("non.admissible_1_2" , value = F , label="(1,2)"  ) ) ,                              
+                        conditionalPanel( condition = "input.dimA>=1 && input.dimB>=1" , checkboxInput("non.admissible_1_1" , value = F , label="(1,1)"  ) ) 
+                 ) ,
+                 column(1 , 
+                        
+                        conditionalPanel( condition = "input.dimA>=2 && input.dimB>=8" , checkboxInput("non.admissible_2_8" , value = F , label="(2,8)"  ) ) ,
+                        conditionalPanel( condition = "input.dimA>=2 && input.dimB>=7" , checkboxInput("non.admissible_2_7" , value = F , label="(2,7)"  ) ) ,                              
+                        conditionalPanel( condition = "input.dimA>=2 && input.dimB>=6" , checkboxInput("non.admissible_2_6" , value = F , label="(2,6)"  ) ) ,
+                        conditionalPanel( condition = "input.dimA>=2 && input.dimB>=5" , checkboxInput("non.admissible_2_5" , value = F , label="(2,5)"  ) ) ,
+                        conditionalPanel( condition = "input.dimA>=2 && input.dimB>=4" , checkboxInput("non.admissible_2_4" , value = F , label="(2,4)"  ) ) ,                              
+                        conditionalPanel( condition = "input.dimA>=2 && input.dimB>=3" , checkboxInput("non.admissible_2_3" , value = F , label="(2,3)"  ) ) ,
+                        conditionalPanel( condition = "input.dimA>=2 && input.dimB>=2" , checkboxInput("non.admissible_2_2" , value = F , label="(2,2)"  ) ) ,                              
+                        conditionalPanel( condition = "input.dimA>=2 && input.dimB>=1" , checkboxInput("non.admissible_2_1" , value = F , label="(2,1)"  ) ) 
+                 )  ,  
+                 column(1 , 
+                        
+                        conditionalPanel( condition = "input.dimA>=3 && input.dimB>=8" , checkboxInput("non.admissible_3_8" , value = F , label="(3,8)"  ) ) ,
+                        conditionalPanel( condition = "input.dimA>=3 && input.dimB>=7" , checkboxInput("non.admissible_3_7" , value = F , label="(3,7)"  ) ) ,                              
+                        conditionalPanel( condition = "input.dimA>=3 && input.dimB>=6" , checkboxInput("non.admissible_3_6" , value = F , label="(3,6)"  ) ) ,
+                        conditionalPanel( condition = "input.dimA>=3 && input.dimB>=5" , checkboxInput("non.admissible_3_5" , value = F , label="(3,5)"  ) ) ,
+                        conditionalPanel( condition = "input.dimA>=3 && input.dimB>=4" , checkboxInput("non.admissible_3_4" , value = F , label="(3,4)"  ) ) ,                              
+                        conditionalPanel( condition = "input.dimA>=3 && input.dimB>=3" , checkboxInput("non.admissible_3_3" , value = F , label="(3,3)"  ) ) ,
+                        conditionalPanel( condition = "input.dimA>=3 && input.dimB>=2" , checkboxInput("non.admissible_3_2" , value = F , label="(3,2)"  ) ) ,                              
+                        conditionalPanel( condition = "input.dimA>=3 && input.dimB>=1" , checkboxInput("non.admissible_3_1" , value = F , label="(3,1)"  ) ) 
+                 ) ,
+                 column(1 , 
+                        
+                        conditionalPanel( condition = "input.dimA>=4 && input.dimB>=8" , checkboxInput("non.admissible_4_8" , value = F , label="(4,8)"  ) ) ,
+                        conditionalPanel( condition = "input.dimA>=4 && input.dimB>=7" , checkboxInput("non.admissible_4_7" , value = F , label="(4,7)"  ) ) ,                              
+                        conditionalPanel( condition = "input.dimA>=4 && input.dimB>=6" , checkboxInput("non.admissible_4_6" , value = F , label="(4,6)"  ) ) ,
+                        conditionalPanel( condition = "input.dimA>=4 && input.dimB>=5" , checkboxInput("non.admissible_4_5" , value = F , label="(4,5)"  ) ) ,
+                        conditionalPanel( condition = "input.dimA>=4 && input.dimB>=4" , checkboxInput("non.admissible_4_4" , value = F , label="(4,4)"  ) ) ,                              
+                        conditionalPanel( condition = "input.dimA>=4 && input.dimB>=3" , checkboxInput("non.admissible_4_3" , value = F , label="(4,3)"  ) ) ,
+                        conditionalPanel( condition = "input.dimA>=4 && input.dimB>=2" , checkboxInput("non.admissible_4_2" , value = F , label="(4,2)"  ) ) ,                              
+                        conditionalPanel( condition = "input.dimA>=4 && input.dimB>=1" , checkboxInput("non.admissible_4_1" , value = F , label="(4,1)"  ) ) 
+                 )  ,  
+                 column(1 , 
+                        
+                        conditionalPanel( condition = "input.dimA>=5 && input.dimB>=8" , checkboxInput("non.admissible_5_8" , value = F , label="(5,8)"  ) ) ,
+                        conditionalPanel( condition = "input.dimA>=5 && input.dimB>=7" , checkboxInput("non.admissible_5_7" , value = F , label="(5,7)"  ) ) ,                              
+                        conditionalPanel( condition = "input.dimA>=5 && input.dimB>=6" , checkboxInput("non.admissible_5_6" , value = F , label="(5,6)"  ) ) ,
+                        conditionalPanel( condition = "input.dimA>=5 && input.dimB>=5" , checkboxInput("non.admissible_5_5" , value = F , label="(5,5)"  ) ) ,
+                        conditionalPanel( condition = "input.dimA>=5 && input.dimB>=4" , checkboxInput("non.admissible_5_4" , value = F , label="(5,4)"  ) ) ,                              
+                        conditionalPanel( condition = "input.dimA>=5 && input.dimB>=3" , checkboxInput("non.admissible_5_3" , value = F , label="(5,3)"  ) ) ,
+                        conditionalPanel( condition = "input.dimA>=5 && input.dimB>=2" , checkboxInput("non.admissible_5_2" , value = F , label="(5,2)"  ) ) ,                              
+                        conditionalPanel( condition = "input.dimA>=5 && input.dimB>=1" , checkboxInput("non.admissible_5_1" , value = F , label="(5,1)"  ) ) 
+                 ) ,
+                 column(1 , 
+                        
+                        conditionalPanel( condition = "input.dimA>=6 && input.dimB>=8" , checkboxInput("non.admissible_6_8" , value = F , label="(6,8)"  ) ) ,
+                        conditionalPanel( condition = "input.dimA>=6 && input.dimB>=7" , checkboxInput("non.admissible_6_7" , value = F , label="(6,7)"  ) ) ,                              
+                        conditionalPanel( condition = "input.dimA>=6 && input.dimB>=6" , checkboxInput("non.admissible_6_6" , value = F , label="(6,6)"  ) ) ,
+                        conditionalPanel( condition = "input.dimA>=6 && input.dimB>=5" , checkboxInput("non.admissible_6_5" , value = F , label="(6,5)"  ) ) ,
+                        conditionalPanel( condition = "input.dimA>=6 && input.dimB>=4" , checkboxInput("non.admissible_6_4" , value = F , label="(6,4)"  ) ) ,                              
+                        conditionalPanel( condition = "input.dimA>=6 && input.dimB>=3" , checkboxInput("non.admissible_6_3" , value = F , label="(6,3)"  ) ) ,
+                        conditionalPanel( condition = "input.dimA>=6 && input.dimB>=2" , checkboxInput("non.admissible_6_2" , value = F , label="(6,2)"  ) ) ,                              
+                        conditionalPanel( condition = "input.dimA>=6 && input.dimB>=1" , checkboxInput("non.admissible_6_1" , value = F , label="(6,1)"  ) ) 
+                 )  ,  
+                 column(1 , 
+                        conditionalPanel( condition = "input.dimA>=7 && input.dimB>=8" , checkboxInput("non.admissible_7_8" , value = F , label="(7,8)"  ) ) ,
+                        conditionalPanel( condition = "input.dimA>=7 && input.dimB>=7" , checkboxInput("non.admissible_7_7" , value = F , label="(7,7)"  ) ) ,                              
+                        conditionalPanel( condition = "input.dimA>=7 && input.dimB>=6" , checkboxInput("non.admissible_7_6" , value = F , label="(7,6)"  ) ) ,
+                        conditionalPanel( condition = "input.dimA>=7 && input.dimB>=5" , checkboxInput("non.admissible_7_5" , value = F , label="(7,5)"  ) ) ,
+                        conditionalPanel( condition = "input.dimA>=7 && input.dimB>=4" , checkboxInput("non.admissible_7_4" , value = F , label="(7,4)"  ) ) ,                              
+                        conditionalPanel( condition = "input.dimA>=7 && input.dimB>=3" , checkboxInput("non.admissible_7_3" , value = F , label="(7,3)"  ) ) ,
+                        conditionalPanel( condition = "input.dimA>=7 && input.dimB>=2" , checkboxInput("non.admissible_7_2" , value = F , label="(7,2)"  ) ) ,                              
+                        conditionalPanel( condition = "input.dimA>=7 && input.dimB>=1" , checkboxInput("non.admissible_7_1" , value = F , label="(7,1)"  ) ) 
+                 ) ,
+                 column(1 , 
+                        conditionalPanel( condition = "input.dimA>=8 && input.dimB>=8" , checkboxInput("non.admissible_8_8" , value = F , label="(8,8)"  ) ) ,
+                        conditionalPanel( condition = "input.dimA>=8 && input.dimB>=7" , checkboxInput("non.admissible_8_7" , value = F , label="(8,7)"  ) ) ,                              
+                        conditionalPanel( condition = "input.dimA>=8 && input.dimB>=6" , checkboxInput("non.admissible_8_6" , value = F , label="(8,6)"  ) ) ,
+                        conditionalPanel( condition = "input.dimA>=8 && input.dimB>=5" , checkboxInput("non.admissible_8_5" , value = F , label="(8,5)"  ) ) ,
+                        conditionalPanel( condition = "input.dimA>=8 && input.dimB>=4" , checkboxInput("non.admissible_8_4" , value = F , label="(8,4)"  ) ) ,                              
+                        conditionalPanel( condition = "input.dimA>=8 && input.dimB>=3" , checkboxInput("non.admissible_8_3" , value = F , label="(8,3)"  ) ) ,
+                        conditionalPanel( condition = "input.dimA>=8 && input.dimB>=2" , checkboxInput("non.admissible_8_2" , value = F , label="(8,2)"  ) ) ,                              
+                        conditionalPanel( condition = "input.dimA>=8 && input.dimB>=1" , checkboxInput("non.admissible_8_1" , value = F , label="(8,1)"  ) ) 
+                 ) 
+               ))             
+             
              
     ),
     

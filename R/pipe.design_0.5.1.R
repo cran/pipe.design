@@ -1,5 +1,5 @@
-## pipe.design version 0.4
-## MJS 01/04/2016
+## pipe.design version 0.5.1
+## MJS 10/05/2017
 
 if(getRversion() >= "2.15.1") globalVariables(c("y","z","ci"))
 
@@ -52,7 +52,7 @@ if(getRversion() >= "2.15.1") globalVariables(c("y","z","ci"))
 ## R - TO COME IN FUTURE VERSION
 ## P - TO COME IN FUTURE VERSION
 
-pipe.design<-function(N=dim(data)[1]+1,S=1,c,theta,pi=NULL,prior.med=NULL,prior.ss=NULL,strategy,admis,constraint=NULL,epsilon=NULL,mode="sim",data=matrix(nrow=0,ncol=0),a=NULL,b=NULL,alternate=FALSE,uppertox.constraint=NULL,stop=NULL,non.admissible=NULL,seed=NULL){
+pipe.design<-function(N=dim(data)[1]+1,S=1,c,theta,pi=NULL,prior.med=NULL,prior.ss=NULL,strategy,admis,constraint="none",epsilon=NULL,mode="sim",data=matrix(nrow=0,ncol=0),a=NULL,b=NULL,alternate=FALSE,uppertox.constraint=NULL,stop=NULL,non.admissible=NULL,seed=NULL){
 
   ## Contour select option that will be used in future version
   contour.select="mode"  
@@ -82,8 +82,10 @@ pipe.design<-function(N=dim(data)[1]+1,S=1,c,theta,pi=NULL,prior.med=NULL,prior.
 	if(!(strategy %in% c("ss","ss-random"))) stop("strategy must be one of `ss' or `ss-random'")
 ## ,"psmooth" TO COME IN FUTURE VERSION  or `psmooth'"
 	if(!(admis %in% c("adjacent","closest"))) stop("admis must be one of `adjacent' or `closest'")
-  # Following check also allows constraint to take value "none" for ShinyPIPE application
-  if(!is.null(constraint) & !(constraint %in% c("none","neighbouring","no.dose.skip","neighbouring-nodiag","no.dose.skip-nodiag"))) stop("constraint must be one of `neighbouring', `no.dose.skip', `neighbouring-nodiag' or `no.dose.skip-nodiag'")
+  # Following check changed to allow constraint to take value "none" for ShinyPIPE application
+  if(!(constraint %in% c("none","neighbouring","no.dose.skip","neighbouring-nodiag","no.dose.skip-nodiag"))) {
+    stop("constraint must be one of `none', `neighbouring', `no.dose.skip', `neighbouring-nodiag' or `no.dose.skip-nodiag'")
+  }
 	if(!(mode %in% c("sim","nodlt","alldlt"))) stop("mode must be one of `sim', `nodlt', or `alldlt'")
 	if(mode=="sim" & is.null(pi)){
 		# cat("`pi' must be specified to conduct a simulation study, only next recommended dose will be given \n")
@@ -248,6 +250,7 @@ pipe.design<-function(N=dim(data)[1]+1,S=1,c,theta,pi=NULL,prior.med=NULL,prior.
 					}
 					rec.i[m,1]<-data$doseA[m*c]
 					rec.j[m,1]<-data$doseB[m*c]
+					runif(1) ## Added by MJS for version 0.5.1 so that we get same sequence of random numbers no matter how much data is specified in the trial
 				} else if(mode=="alldlt" | mode=="nodlt") { # If nodlt or alldlt specified, add 0 or c respectively, else generate from binomial with true p(DLT)=pi
 					r[rec.i[m,1],rec.j[m,1]]<-r[rec.i[m,1],rec.j[m,1]]+ifelse(mode=="nodlt",0,c)
 					n[rec.i[m,1],rec.j[m,1]]<-n[rec.i[m,1],rec.j[m,1]]+c
@@ -496,7 +499,7 @@ mtc.create<-function(matrices,p,constraint,pconstraint,epsilon,admis,rec.i,rec.j
 	if(grepl("nodiag",constraint)){
 		if(dim(rec.i)[1]>=1){
 			if(rec.i[m,1]!=I & rec.j[m,1]!=J){
-				admissible[rec.i[m,1]+1,rec.j[m,1]+1]<-FALSE
+				admissible[(rec.i[m,1]+1):I,(rec.j[m,1]+1):J]<-FALSE   ## Changed version 0.51 so that no dose combinations in which both doses are escalated simulataneouly are allowed
 			}
 		}
 	}
@@ -851,26 +854,32 @@ print.pipe<-function(x,...){
 ## pi: True p(DLT) matrix
 ## cut.points: cut points on the true DLT range to present the operating characteristics
 ## digits: Number of decimal places to be used for reporting
-## print: (defaul=TRUE). Should the output be printed?
-print.pipe.sim<-function(x,pi=x$pi,cut.points=c(0,15,25,35,45.1,100)/100,digits=1,print=TRUE,...){
+## print: (default=TRUE). Should the output be printed?
+print.pipe.sim<-function(x,pi=x$pi,cut.points=unique(c(0,pmin(1,pmax(0,seq(x$theta-0.15,x$theta+0.15,by=0.1))),1)),digits=1,print=TRUE,...){
 	exp<-x$exp
 	rec<-x$rec
 
-	cuts<-cut(pi,cut.points,right=F)
+	cuts<-cut(pi,cut.points,right=F,include.lowest=TRUE)
 	# Experimentation proportions table
 	exp.table<-sapply(levels(cuts),function(i){sum(exp[cuts==i])})
 
 	# Recommendation proportions table
 	rec.table<-sapply(levels(cuts),function(i){sum(rec[cuts==i])})
+	
+	# Number of recommended Phase II doses table
+	n.rpII.table<-prop.table(table(x$n.rpII))
 
 	if(print){
 		cat("\n Experimentation percentages by true toxicity: \n")
 		print(round(100*exp.table,digits))
 
 		cat("\n Recommendation percentages by true toxicity: \n")
-		print(round(100*rec.table,digits))		
+		print(round(100*rec.table,digits))	
+		
+		cat("\n Percentage of times a trial recommends 0, 1, 2, ... doses for Phase II: \n")
+		print(round(100*n.rpII.table,digits))	
 	}
-	return(list(exp.table=exp.table,rec.table=rec.table))
+	return(list(exp.table=exp.table,rec.table=rec.table,n.rpII.table=n.rpII.table))
 }
 
 

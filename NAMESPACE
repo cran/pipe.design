@@ -14,7 +14,7 @@ importFrom("xtable","xtable")
 importFrom("grDevices", "dev.new")
 importFrom("graphics", "barplot", "box", "lines", "mtext", "par",
               "plot", "polygon", "segments", "text")
-importFrom("stats", "complete.cases", "dbeta", "median", "qbeta") 
+importFrom("stats", "complete.cases", "dbeta", "median", "qbeta","runif") 
 
 
 S3method(plot,pipe)

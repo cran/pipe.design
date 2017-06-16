@@ -9,8 +9,9 @@ Print method for a trial or series of trials conducted using a \code{\link{pipe.
 }
 \usage{
 \method{print}{pipe}(x, \dots)
-\method{print}{pipe.sim}(x, pi = x$pi, cut.points = c(0, 15, 25, 35, 45.1, 100)/100, digits = 1, 
-	print = TRUE, \dots)
+\method{print}{pipe.sim}(x, pi = x$pi, 
+  cut.points = unique(c(0,pmin(1,pmax(0,seq(x$theta-0.15,x$theta+0.15,by=0.1))),1)), 
+  digits = 1, print = TRUE, \dots)
 }
 \arguments{
   \item{x}{
@@ -21,7 +22,7 @@ An object of class "pipe" or "pipe.sim" as returned by \code{\link{pipe.design}}
 A matrix with rows denoting levels of drug A and columns denoting levels of drug B. Each element gives the true probability of the outcome (dose-limiting toxicity) for that dose combination. If omitted then the true probabilities of the outcome will be taken from that used when creating the \code{x} object.
 }
  \item{cut.points}{
-Cutpoints of toxicity for which the operating characteristics are to be categorised. 
+Cutpoints of toxicity for which the operating characteristics are to be categorised. Default is [0,x$theta-0.1) [x$theta-0.1,x$theta+0.1) [x$theta+0.1,1]
 }
  \item{digits}{
 	The number of decimal places to print the operating characteristics 
@@ -36,6 +37,7 @@ If a simulation study is conducted, then the following operating characteristics
 \describe{
 	\item{Experimentation percentages}{Percentage of patients recruited to each true region of toxicity (as specified by \code{cut.points}), across the simulated trials}
 	\item{Recommendation percentages}{Percentage of times that recommend doses lie within each true region of toxicity (as specified by \code{cut.points}). As more than one dose combination can be recommended in any trial, the denominator is the total number of recommended phase II doses over the simulations}
+	\item{Percentage of times a trial recommends k doses for Phase II}{Provides the percentage of time that each trial recommends 0, 1, ..., k doses for Phase II experimentation. 0 doses indicates that the trial stopped early and recommended no doses.}
 }
 
 }

@@ -50,6 +50,17 @@ shinyServer(function(input, output , session) {
   m
   })
   
+  ## Non-admissible matrix
+  non.admissible <- reactive({ m <- matrix(NA , nrow=ndimA() , ncol=ndimB() )
+  for(i in 1:ndimA() ) {
+    for(j in 1:ndimB() ) {
+      m[i,j] <- input[[paste("non.admissible",i,j,sep="_")]]
+    } 
+  }
+  m
+  })
+  
+  ## True DLTs
   pi <- reactive({ m <- matrix(NA , nrow=ndimA() , ncol=ndimB() )
   for(i in 1:ndimA() ) {
     for(j in 1:ndimB() ) {
@@ -78,7 +89,8 @@ shinyServer(function(input, output , session) {
  
   des <- reactive({
     if(all(!is.na( prior.med() ) & !is.na(prior.ss()))) {
-        des <- pipe.design(
+      
+      des <- pipe.design(
         N = nrow( dat() ) + input$cohortsize ,
         c = input$cohortsize , 
         theta = input$theta , 
@@ -90,6 +102,9 @@ shinyServer(function(input, output , session) {
         epsilon = input$epsilon ,
         mode = "sim",
         alternate = input$alternate ,
+        uppertox.constraint = input$uppertox.constraint,
+        stop = input$stop,
+        non.admissible = non.admissible(),
         data = dat(),
         seed=input$seed
         ) 
@@ -107,6 +122,9 @@ shinyServer(function(input, output , session) {
         epsilon = input$epsilon ,
         mode = "sim",
         alternate = input$alternate ,
+        uppertox.constraint = input$uppertox.constraint,
+        stop = input$stop,
+        non.admissible = non.admissible(),
         data = dat(),
         seed=input$seed
       ) 
@@ -135,6 +153,9 @@ simfn<-reactive({
               epsilon = input$epsilon ,
               mode = "sim",
               alternate = input$alternate ,
+              uppertox.constraint = input$uppertox.constraint,
+              stop = input$stop,
+              non.admissible = non.admissible(),
               data = dat(),
               seed=input$seed
             )
